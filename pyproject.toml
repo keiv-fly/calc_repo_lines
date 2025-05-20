@@ -9,10 +9,10 @@ description = "Simple script to count all lines in a GitHub repository"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pytest>=7.4.0"
+    "pytest>=7.4.0",
+    "tqdm>=4.67.1"
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-ra -q"

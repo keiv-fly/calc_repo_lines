@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+
 import argparse
 import datetime as _dt
 import subprocess
 import tempfile
 from pathlib import Path
-
+from tqdm import tqdm
 
 
 def count_lines_in_file(path: Path) -> tuple[int, int]:
@@ -27,11 +28,15 @@ def calc_lines(directory: Path) -> tuple[int, int]:
     """Walk a directory tree and return total and code line counts."""
     total = 0
     code = 0
-    for path in directory.rglob("*"):
-        if path.is_file() and ".git" not in path.parts:
-            t, c = count_lines_in_file(path)
-            total += t
-            code += c
+
+    # First count total files
+    files = [p for p in directory.rglob("*") if p.is_file() and ".git" not in p.parts]
+
+    # Process files with progress bar
+    for path in tqdm(files, desc="Counting lines", unit="file"):
+        t, c = count_lines_in_file(path)
+        total += t
+        code += c
     return total, code
 
 
@@ -39,9 +44,25 @@ __all__ = ["count_lines_in_file", "calc_lines", "main"]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Calculate lines of a remote repository")
+    """Calculate lines of code in a remote git repository.
+
+    Usage:
+        python calc_repo_lines.py <repository_url> [--branch <branch_name>]
+
+    Arguments:
+        repository_url    URL of the git repository to analyze (e.g., https://github.com/user/repo)
+        --branch         Optional branch name to analyze (defaults to repository's default branch)
+
+    Example:
+        python calc_repo_lines.py https://github.com/user/repo --branch main
+    """
+    parser = argparse.ArgumentParser(
+        description="Calculate lines of a remote repository"
+    )
     parser.add_argument("repo", help="URL of the git repository")
-    parser.add_argument("--branch", help="Branch to checkout; defaults to repo default branch")
+    parser.add_argument(
+        "--branch", help="Branch to checkout; defaults to repo default branch"
+    )
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -58,7 +79,9 @@ def main() -> None:
     data_dir = Path("data")
     data_dir.mkdir(exist_ok=True)
     results_file = data_dir / "results.txt"
-    now = _dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    now = (
+        _dt.datetime.now(_dt.UTC).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+    )
     line = f"Repo: {args.repo} | # lines: {total} | # code lines: {code} | Datetime: {now}\n"
     with results_file.open("a", encoding="utf-8") as f:
         f.write(line)
