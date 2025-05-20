@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calc_repo_lines"
+version = "0.1.0"
+description = "Simple script to count all lines in a GitHub repository"
+readme = "README.md"
+requires-python = ">=3.13"
